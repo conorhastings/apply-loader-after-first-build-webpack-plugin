@@ -60,7 +60,6 @@ ApplyLoaderAfterFirstBuildPlugin.prototype.apply = function(compiler) {
       that.prevTimestamps = compilation.fileTimestamps
     }
     callback();
-    //do something to update the incldues of the dynamically added loaders here before hcanged files are run
   });
 
   compiler.plugin('done', function() {
