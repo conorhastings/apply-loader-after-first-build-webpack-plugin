@@ -48,13 +48,14 @@ ApplyLoaderAfterFirstBuildPlugin.prototype.apply = function(compiler) {
         }
         return false;
       });
-      if (hasNewLoaders && newFiles.length) {
+      var hasNewFiles = !!newFiles.length;
+      if (hasNewLoaders && hasNewFiles) {
         that.addNewIncludes(compiler.options.module.loaders, newFiles, "startingLoaderLength");
       }
-      if (hasNewPreLoaders && newFiles.length) {
+      if (hasNewPreLoaders && hasNewFiles) {
         that.addNewIncludes(compiler.options.module.preLoaders, newFiles, "startingPreLoaderLength");
       }
-      if (hasNewPostLoaders && newFiles.length) {
+      if (hasNewPostLoaders && hasNewFiles) {
         that.addNewIncludes(compiler.options.module.postLoaders, newFiles, "startingPostLoaderLength");
       }
       that.prevTimestamps = compilation.fileTimestamps
