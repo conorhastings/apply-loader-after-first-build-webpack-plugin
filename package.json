@@ -1,6 +1,6 @@
 {
   "name": "apply-loader-after-first-build-webpack-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "a webpack plugin that allows you to dynamically add a loader after the initial build has occurred (useful when using watch)",
   "main": "index.js",
   "scripts": {
