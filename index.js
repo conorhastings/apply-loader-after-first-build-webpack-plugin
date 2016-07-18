@@ -58,7 +58,7 @@ ApplyLoaderAfterFirstBuildPlugin.prototype.apply = function(compiler) {
       if (hasNewPostLoaders && hasNewFiles) {
         that.addNewIncludes(compiler.options.module.postLoaders, newFiles, "startingPostLoaderLength");
       }
-      that.prevTimestamps = compilation.fileTimestamps
+      that.prevTimestamps = compilation.fileTimestamps;
     }
     callback();
   });
