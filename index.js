@@ -37,56 +37,119 @@ ApplyLoaderAfterFirstBuildPlugin.prototype.apply = function(compiler) {
   this.startingPreLoaderLength = startingPreLoaders ? startingPreLoaders.length : 0;
   this.startingPostLoaderLength = startingPostLoaders ? startingPostLoaders.length : 0;
 
+  /* immediately add any starting includes */
+  if (hasNewLoaders) {
+    const loadersWithStartingIncude = getLoadersWithStartingInclude(newLoaders);
+    if (loadersWithStartingIncude.length) {
+      compiler.options.module.loaders = (
+        startingLoaders 
+        ? 
+        startingLoaders.concat(loadersWithStartingIncude) 
+        : 
+        loadersWithStartingIncude
+      );
+    }
+  }
+
+  if (hasNewPreLoaders) {
+    const preLoadersWithStartingInclude = getLoadersWithStartingInclude(newPreLoaders);
+    if (preLoadersWithStartingInclude.length) {
+      compiler.options.module.preLoaders = (
+        startingPreLoaders 
+        ? 
+        startingPreLoaders.concat(preLoadersWithStartingInclude) 
+        : 
+        preLoadersWithStartingInclude
+      );
+    }
+  }
+
+  if (hasNewPostLoaders) {
+    const postLoadersWithStartingInclude = getLoadersWithStartingInclude(newPostLoaders);
+    if (postLoadersWithStartingInclude.length) {
+      compiler.options.module.postLoaders = (
+        startingPostLoaders 
+        ? 
+        startingPostLoaders.concat(postLoadersWithStartingInclude) 
+        : 
+        postLoadersWithStartingInclude
+      ); 
+    }
+  }
+
   compiler.plugin('make', function(compilation, callback) {
-    if (that.newLoadersConcatted) {
-      var newFiles = Object.keys(compilation.fileTimestamps).filter(function(fileName) {
-        var timestamp = compilation.fileTimestamps[fileName];
-        var prevTimestamp = that.prevTimestamps[fileName] || that.startTime;
-        if (timestamp > prevTimestamp && !that.addedIncludes[fileName]) {
-          that.addedIncludes[fileName] = true;
-          return true;
-        }
-        return false;
-      });
-      var hasNewFiles = !!newFiles.length;
-      if (hasNewLoaders && hasNewFiles) {
-        that.addNewIncludes(compiler.options.module.loaders, newFiles, "startingLoaderLength");
+    var newFiles = Object.keys(compilation.fileTimestamps).filter(function(fileName) {
+      var timestamp = compilation.fileTimestamps[fileName];
+      var prevTimestamp = that.prevTimestamps[fileName] || that.startTime;
+      if (timestamp > prevTimestamp && !that.addedIncludes[fileName]) {
+        that.addedIncludes[fileName] = true;
+        return true;
       }
-      if (hasNewPreLoaders && hasNewFiles) {
-        that.addNewIncludes(compiler.options.module.preLoaders, newFiles, "startingPreLoaderLength");
-      }
-      if (hasNewPostLoaders && hasNewFiles) {
-        that.addNewIncludes(compiler.options.module.postLoaders, newFiles, "startingPostLoaderLength");
-      }
+      return false;
+    });
+    var hasNewFiles = !!newFiles.length;
+    var addedNewIncludes;
+
+    if (hasNewLoaders && hasNewFiles && that.newLoadersConcatted) {
+      that.addNewIncludes(compiler.options.module.loaders, newFiles, "startingLoaderLength");
+      addedNewIncludes = true;
+    }
+    if (hasNewPreLoaders && hasNewFiles && that.newPreLoadersConcatted) {
+      that.addNewIncludes(compiler.options.module.preLoaders, newFiles, "startingPreLoaderLength");
+      addedNewIncludes = true;
+    }
+    if (hasNewPostLoaders && hasNewFiles && that.newPostLoadersConcatted) {
+      that.addNewIncludes(compiler.options.module.postLoaders, newFiles, "startingPostLoaderLength");
+      addedNewIncludes = true;
+    }
+    if (addedNewIncludes) {
       that.prevTimestamps = compilation.fileTimestamps;
     }
     callback();
   });
 
   compiler.plugin('done', function() {
-    if (that.newLoadersConcatted) {
-      return;
-    }
-    if (startingLoaders && hasNewLoaders) {
-      compiler.options.module.loaders = startingLoaders.concat(newLoaders);
-    } else if (hasNewLoaders) {
+    if (compiler.options.module.loaders && hasNewLoaders && !that.newLoadersConcatted) {
+      var loadersWithoutStartingInclude = getLoadersWithoutStartingInclude(newLoaders);
+      if (loadersWithoutStartingInclude.length) {
+        compiler.options.module.loaders = compiler.options.module.loaders.concat(loadersWithoutStartingInclude);
+      } 
+      that.newLoadersConcatted = true;
+    } else if (hasNewLoaders && !that.newLoadersConcatted) {
       compiler.options.module.loaders = newLoaders;
+      that.newLoadersConcatted = true;
     }
 
-    if (startingPreLoaders && hasNewPreLoaders) {
-      compiler.options.module.preLoaders = startingPreLoaders.concat(newPreLoaders);
-    } else if (hasNewPreLoaders) {
+    if (compiler.options.module.preLoaders && hasNewPreLoaders && !that.newPreLoadersConcatted) {
+      var preLoadersWithoutStartingInclude = getLoadersWithoutStartingInclude(newPreLoaders);
+      if (preLoadersWithoutStartingInclude.length) {
+        compiler.options.module.preLoaders =  compiler.options.module.preLoaders.concat(preLoadersWithoutStartingInclude);
+      }
+      that.newPreLoadersConcatted = true;
+    } else if (hasNewPreLoaders && !that.newPreLoadersConcatted) {
       compiler.options.module.preLoaders = newPreLoaders;
+      that.newPreLoadersConcatted = true;
     }
 
-    if (startingPostLoaders && hasNewPostLoaders) {
-      compiler.options.module.postLoaders = startingPostLoaders.concat(newPostLoaders);
-    } else if (hasNewPostLoaders) {
+    if (compiler.options.module.postLoaders && hasNewPostLoaders && !that.newPostLoadersConcatted) {
+      var postLoadersWithoutStartingInclude = getLoadersWithoutStartingInclude(newPostLoaders);
+      if (postLoadersWithoutStartingInclude.length) {
+        compiler.options.module.postLoaders = compiler.options.module.postLoaders.concat(postLoadersWithoutStartingInclude);
+      }
+      that.newPostLoadersConcatted = true;
+    } else if (hasNewPostLoaders && !that.newPostLoadersConcatted) {
       compiler.options.module.postLoaders = newPostLoaders;
+      that.newPostLoadersConcatted = true;
     }
-
-    that.newLoadersConcatted = true;
   });
 };
+
+function getLoadersWithStartingInclude(loaders) {
+  return loaders.filter(loader => loader.include);
+}
+
+function getLoadersWithoutStartingInclude(loaders) {
+  return loaders.filter(loader => !loader.include);
+}
 
 module.exports = ApplyLoaderAfterFirstBuildPlugin;
