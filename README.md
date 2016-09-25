@@ -38,4 +38,8 @@ var incrementalPostLoader = [{
   ]
 }
 ```
+
+You can also pass in an `include` key to the loader and these files will have the loader applied immediately. Note that this currently only supports `include` in the array format. 
+
+
 And thats it, please feel free to reach out through issues with any bugs/missing docs/feature requests etc..
